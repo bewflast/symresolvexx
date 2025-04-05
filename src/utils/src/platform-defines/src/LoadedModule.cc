@@ -2,8 +2,7 @@
 
 namespace symresolvexx::utils::platform {
 
-LoadedModule::LoadedModule(std::string_view moduleName) : moduleInfo_{platform::makeLoadedModuleInfo(moduleName)}
-{}
+LoadedModule::LoadedModule(std::string_view moduleName) : moduleInfo_{platform::makeLoadedModuleInfo(moduleName)} {}
 
 std::uintptr_t LoadedModule::getBeginAddress() const noexcept
 {

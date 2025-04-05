@@ -1,9 +1,10 @@
 #pragma once
 
-#include <string>
 #include <cstdint>
+#include <string>
 #include <string_view>
 #include <unordered_map>
+
 
 namespace symresolvexx::utils {
 auto getExportedSymbolAddress(std::string_view moduleName, std::string_view symbolName) -> std::uintptr_t;

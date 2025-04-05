@@ -16,37 +16,27 @@
 #include <unordered_map>
 
 namespace {
-inline static constexpr const auto* DLL_SHARED_LIB_FILE_EXTENSION {".dll"};
+inline static constexpr const auto* DLL_SHARED_LIB_FILE_EXTENSION{".dll"};
 
-inline static constexpr const auto UNDECORATED_SYMBOL_BUFFER_SIZE {1024UL};
-inline static constexpr const auto LOADED_MODULE_FILE_PATH_BUFFER_SIZE {1024UL};
+inline static constexpr const auto  UNDECORATED_SYMBOL_BUFFER_SIZE{1024UL};
+inline static constexpr const auto  LOADED_MODULE_FILE_PATH_BUFFER_SIZE{1024UL};
 
-inline static constexpr const auto UNDECORATE_SYMBOL_RULES_FLAGS {
-    UNDNAME_COMPLETE                |
-    UNDNAME_NO_THISTYPE             |
-    UNDNAME_NO_MS_THISTYPE          |
-    UNDNAME_NO_MS_KEYWORDS          |
-    UNDNAME_NO_MEMBER_TYPE          |
-    UNDNAME_NO_CV_THISTYPE          |
-    UNDNAME_NO_SPECIAL_SYMS         |
-    UNDNAME_NO_ALLOCATION_MODEL     |
-    UNDNAME_NO_RETURN_UDT_MODEL     |
-    UNDNAME_NO_THROW_SIGNATURES     |
-    UNDNAME_NO_FUNCTION_RETURNS     |
-    UNDNAME_NO_ACCESS_SPECIFIERS    |
-    UNDNAME_NO_LEADING_UNDERSCORES  |
-    UNDNAME_NO_ALLOCATION_LANGUAGE  
+inline static constexpr const auto  UNDECORATE_SYMBOL_RULES_FLAGS{
+    UNDNAME_COMPLETE | UNDNAME_NO_THISTYPE | UNDNAME_NO_MS_THISTYPE | UNDNAME_NO_MS_KEYWORDS | UNDNAME_NO_MEMBER_TYPE
+    | UNDNAME_NO_CV_THISTYPE | UNDNAME_NO_SPECIAL_SYMS | UNDNAME_NO_ALLOCATION_MODEL | UNDNAME_NO_RETURN_UDT_MODEL
+    | UNDNAME_NO_THROW_SIGNATURES | UNDNAME_NO_FUNCTION_RETURNS | UNDNAME_NO_ACCESS_SPECIFIERS
+    | UNDNAME_NO_LEADING_UNDERSCORES | UNDNAME_NO_ALLOCATION_LANGUAGE
 
 };
 
-auto formatUnDecoratedSymbol(std::string_view symbol) -> std::string 
+auto formatUnDecoratedSymbol(std::string_view symbol) -> std::string
 {
-    auto formattedSymbol  {std::string{symbol}};
+    auto                                  formattedSymbol{std::string{symbol}};
+    const std::array<std::string_view, 3> substringsToRemove{" *", "class ", " &"};
 
-    const std::array<std::string_view, 3> substringsToRemove {" *", "class ", " &"};
-    
     for (const auto& toRemove : substringsToRemove) {
-        for (auto spacePtr {formattedSymbol.find(toRemove)}; spacePtr != std::string::npos; spacePtr = formattedSymbol.find(toRemove)) {
+        for (auto spacePtr{formattedSymbol.find(toRemove)}; spacePtr != std::string::npos;
+            spacePtr = formattedSymbol.find(toRemove)) {
             formattedSymbol.erase(spacePtr, toRemove.length() - (toRemove[1] == '*' || toRemove[1] == '&' ? 1 : 0));
         }
     }
@@ -59,7 +49,11 @@ auto unDecorateSymbol(const std::string& symbolName) -> std::string
     auto undecoratedSymbolNameBuffer{std::array<char, LOADED_MODULE_FILE_PATH_BUFFER_SIZE>{'\0'}};
     std::ranges::fill(undecoratedSymbolNameBuffer, '\0');
 
-    if (0 == UnDecorateSymbolName(symbolName.c_str(), undecoratedSymbolNameBuffer.data(), undecoratedSymbolNameBuffer.size(), UNDECORATE_SYMBOL_RULES_FLAGS)) {
+    if (0
+        == UnDecorateSymbolName(symbolName.c_str(),
+            undecoratedSymbolNameBuffer.data(),
+            undecoratedSymbolNameBuffer.size(),
+            UNDECORATE_SYMBOL_RULES_FLAGS)) {
         return symbolName;
     }
 
@@ -106,14 +100,15 @@ auto getLoadedModuleInfo(std::string_view moduleName) -> LoadedModule
 
 auto openLoadedModuleHandle(std::string_view moduleName) -> ModuleHandle
 {
-    const std::string moduleFullName{std::string_view::npos == moduleName.find(DLL_SHARED_LIB_FILE_EXTENSION) ? std::string{moduleName} + DLL_SHARED_LIB_FILE_EXTENSION : moduleName};
-    auto* moduleHandle{GetModuleHandleA(moduleFullName.c_str())};
+    const std::string moduleFullName{std::string_view::npos == moduleName.find(DLL_SHARED_LIB_FILE_EXTENSION)
+                                         ? std::string{moduleName} + DLL_SHARED_LIB_FILE_EXTENSION
+                                         : moduleName};
+    auto*             moduleHandle{GetModuleHandleA(moduleFullName.c_str())};
 
     return static_cast<void*>(moduleHandle);
 }
 
-auto closeLoadedModuleHandle([[maybe_unused]] ModuleHandle moduleHandle) -> void 
-{}
+auto closeLoadedModuleHandle([[maybe_unused]] ModuleHandle moduleHandle) -> void {}
 
 auto getExportedSymbolAddress(ModuleHandle handle, char* symbol) -> std::uintptr_t
 {
@@ -125,23 +120,19 @@ auto getLoadedModuleSymbolsAddresses(const LoadedModule& loadedModuleInfo)
 {
     auto currentProcessHandle{GetCurrentProcess()};
     auto options = SymGetOptions();
-    SymSetOptions(options & ~SYMOPT_UNDNAME); 
+    SymSetOptions(options & ~SYMOPT_UNDNAME);
     SymInitialize(currentProcessHandle, nullptr, FALSE);
     std::unique_ptr<std::remove_pointer_t<HANDLE>, decltype(&SymCleanup)> symCleanupCallGuard{
         currentProcessHandle, SymCleanup};
 
-    auto loadedSymModule{
-        SymLoadModuleEx(
-            currentProcessHandle, 
-            nullptr, 
-            loadedModuleInfo.getPath().string().c_str(), 
-            nullptr, 
-            loadedModuleInfo.getBeginAddress(), 
-            0, 
-            nullptr, 
-            0
-        )
-    };
+    auto loadedSymModule{SymLoadModuleEx(currentProcessHandle,
+        nullptr,
+        loadedModuleInfo.getPath().string().c_str(),
+        nullptr,
+        loadedModuleInfo.getBeginAddress(),
+        0,
+        nullptr,
+        0)};
 
     auto symbolsAndAddresses{std::unordered_map<std::string, std::uintptr_t>{}};
     SymEnumSymbols(currentProcessHandle, loadedSymModule, "*", enumSymbolsCallback, &symbolsAndAddresses);
@@ -151,16 +142,15 @@ auto getLoadedModuleSymbolsAddresses(const LoadedModule& loadedModuleInfo)
 
 auto makeLoadedModuleInfo(std::string_view moduleName) -> LoadedModule::ModuleInfo
 {
-    auto moduleInfo {symresolvexx::utils::platform::LoadedModule::ModuleInfo{}};
-    auto moduleHandle {ScopedModuleHandle{moduleName}};
+    auto moduleInfo{symresolvexx::utils::platform::LoadedModule::ModuleInfo{}};
+    auto moduleHandle{ScopedModuleHandle{moduleName}};
 
-    moduleInfo.modulePath = getLoadedModuleFilePath(static_cast<HMODULE>(moduleHandle.get()));
+    moduleInfo.modulePath         = getLoadedModuleFilePath(static_cast<HMODULE>(moduleHandle.get()));
     moduleInfo.moduleBeginAddress = reinterpret_cast<std::uintptr_t>(moduleHandle.get());
-    moduleInfo.moduleEndAddress = getLoadedModuleEndAddress(static_cast<HMODULE>(moduleHandle.get()));
+    moduleInfo.moduleEndAddress   = getLoadedModuleEndAddress(static_cast<HMODULE>(moduleHandle.get()));
 
     return moduleInfo;
 }
-
 
 auto raiseSystemErrorException(const std::string& message) -> void
 {

@@ -5,15 +5,17 @@
 #include <memory>
 #include <string_view>
 
-namespace
+namespace {
+auto isSymbolExported(std::string_view moduleName) -> bool
 {
-    auto isSymbolExported(std::string_view moduleName) -> bool
-    {
-        std::unique_ptr<std::remove_pointer_t<symresolvexx::utils::platform::ModuleHandle>, decltype(&symresolvexx::utils::platform::closeLoadedModuleHandle)> moduleHandle{symresolvexx::utils::platform::openLoadedModuleHandle(moduleName), symresolvexx::utils::platform::closeLoadedModuleHandle};
+    std::unique_ptr<std::remove_pointer_t<symresolvexx::utils::platform::ModuleHandle>,
+        decltype(&symresolvexx::utils::platform::closeLoadedModuleHandle)>
+        moduleHandle{symresolvexx::utils::platform::openLoadedModuleHandle(moduleName),
+            symresolvexx::utils::platform::closeLoadedModuleHandle};
 
-        return nullptr != moduleHandle;
-    }
+    return nullptr != moduleHandle;
 }
+} // namespace
 namespace symresolvexx::utils {
 auto getExportedSymbolAddress(std::string_view moduleName, std::string_view symbolName) -> std::uintptr_t
 {

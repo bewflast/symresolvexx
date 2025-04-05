@@ -4,7 +4,7 @@
 namespace symresolvexx {
 auto resolveSymbol(std::string_view symbolName, std::string_view moduleName) -> void*
 {
-    const auto tryGetExported {utils::getExportedSymbolAddress(moduleName, symbolName)};
+    const auto tryGetExported{utils::getExportedSymbolAddress(moduleName, symbolName)};
     if (0 != tryGetExported) {
         return reinterpret_cast<void*>(tryGetExported);
     }

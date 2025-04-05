@@ -11,17 +11,17 @@ public:
 
     LoadedModule(const LoadedModule& other)             = delete;
     LoadedModule& operator=(const LoadedModule& other)  = delete;
-    
+
     LoadedModule(const LoadedModule&& other)            = delete;
     LoadedModule& operator=(const LoadedModule&& other) = delete;
-    
-    ~LoadedModule() = default;
-    
+
+    ~LoadedModule()                                     = default;
+
     [[nodiscard]] std::string           getName() const noexcept;
     [[nodiscard]] std::filesystem::path getPath() const noexcept;
     [[nodiscard]] std::uintptr_t        getEndAddress() const noexcept;
     [[nodiscard]] std::uintptr_t        getBeginAddress() const noexcept;
-    
+
     struct ModuleInfo
     {
         std::string           moduleName;
@@ -29,8 +29,8 @@ public:
         std::uintptr_t        moduleBeginAddress;
         std::uintptr_t        moduleEndAddress;
     };
-    
-private:    
+
+private:
     const ModuleInfo moduleInfo_;
 };
-} // namespace symresolvexx::utils
+} // namespace symresolvexx::utils::platform

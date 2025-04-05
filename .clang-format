@@ -51,21 +51,6 @@ DerivePointerAlignment: false
 DisableFormat: false
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
-IncludeBlocks: Regroup
-IncludeCategories:
-  # Headers in <> without extension.
-  - Regex:           '<([-A-Za-z0-9\Q/-_\E])+>'
-    Priority:        4
-  # Headers in <> from specific external libraries.
-  - Regex:           '<(gtest|gmock)\/'
-    Priority:        3
-  # Headers in <> with extension.
-  - Regex:           '<([-A-Za-z0-9.\Q/-_\E])+>'
-    Priority:        2
-  # Headers in "" with extension.
-  - Regex:           '"([-A-Za-z0-9.\Q/-_\E])+"'
-    Priority:        1
-IncludeIsMainRegex: '(Test)?$'
 IndentCaseLabels: false
 IndentPPDirectives: None
 IndentWidth: 4
@@ -93,7 +78,7 @@ PenaltyExcessCharacter: 50
 PenaltyReturnTypeOnItsOwnLine: 300
 PointerAlignment: Left
 ReflowComments: false
-SortIncludes: CaseInsensitive
+SortIncludes: false
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: true
 SpaceAfterTemplateKeyword: false
@@ -110,6 +95,6 @@ SpacesInCStyleCastParentheses: false
 SpacesInContainerLiterals: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard: c++20
+Standard: Cpp11
 TabWidth: 4
 UseTab: Never

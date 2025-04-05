@@ -8,33 +8,33 @@
 #include <dlfcn.h>
 #include <cxxabi.h>
 
-namespace
-{
-inline static constexpr const auto* SO_SHARED_LIB_FILE_EXTENSION {".so"};
+namespace {
+inline static constexpr const auto* SO_SHARED_LIB_FILE_EXTENSION{".so"};
 
 struct dl_phdr_iterator_callback_passed_data
 {
-    symresolvexx::utils::platform::LoadedModule::ModuleInfo moduleInfo {};
-    std::string targetModule;
+    symresolvexx::utils::platform::LoadedModule::ModuleInfo moduleInfo{};
+    std::string                                             targetModule;
 };
 
-auto iterateCallback (struct dl_phdr_info* lib, std::size_t /*size*/, void* data) -> int 
+auto iterateCallback(struct dl_phdr_info* lib, std::size_t /*size*/, void* data) -> int
 {
-    auto iteratorCallbackDataPtr {static_cast<dl_phdr_iterator_callback_passed_data*>(data)};
+    auto              iteratorCallbackDataPtr{static_cast<dl_phdr_iterator_callback_passed_data*>(data)};
 
-    const auto moduleFullPathView{std::string_view{lib->dlpi_name}};
-	const auto subFrom{moduleFullPathView.find_last_of("/\\")};
-    const std::string moduleNameStripped {std::string_view::npos == subFrom ? moduleFullPathView : moduleFullPathView.substr(subFrom + 1)};
+    const auto        moduleFullPathView{std::string_view{lib->dlpi_name}};
+    const auto        subFrom{moduleFullPathView.find_last_of("/\\")};
+    const std::string moduleNameStripped{
+        std::string_view::npos == subFrom ? moduleFullPathView : moduleFullPathView.substr(subFrom + 1)};
 
     if (moduleNameStripped != iteratorCallbackDataPtr->targetModule) {
         return 0;
     }
 
-    auto& moduleInfo {iteratorCallbackDataPtr->moduleInfo};
-    auto moduleFullPath{std::string{lib->dlpi_name}};
-    moduleInfo.modulePath = std::string{lib->dlpi_name};
+    auto& moduleInfo{iteratorCallbackDataPtr->moduleInfo};
+    auto  moduleFullPath{std::string{lib->dlpi_name}};
+    moduleInfo.modulePath         = std::string{lib->dlpi_name};
     moduleInfo.moduleBeginAddress = static_cast<std::uintptr_t>(lib->dlpi_addr);
-    moduleInfo.moduleEndAddress = 0;
+    moduleInfo.moduleEndAddress   = 0;
 
     for (int i = 0; i < lib->dlpi_phnum; i++) {
         if (PT_LOAD != lib->dlpi_phdr[i].p_type) {
@@ -50,26 +50,19 @@ auto iterateCallback (struct dl_phdr_info* lib, std::size_t /*size*/, void* data
     return 1;
 };
 
-auto demangleSymbol(std::string_view mangledSymbolName)  -> std::string
+auto demangleSymbol(std::string_view mangledSymbolName) -> std::string
 {
-    auto status {0};
-    const auto demangledSymbolNameBuffer {
-        std::unique_ptr<char, decltype(&free)>{
-            abi::__cxa_demangle(mangledSymbolName.data(), nullptr, nullptr, &status), 
-            free
-        }
-    };
+    auto       status{0};
+    const auto demangledSymbolNameBuffer{std::unique_ptr<char, decltype(&free)>{
+        abi::__cxa_demangle(mangledSymbolName.data(), nullptr, nullptr, &status), free}};
 
     if (-2 == status) {
         return std::string{mangledSymbolName};
     }
-    
+
     if (0 != status) {
-        auto formattedErrorMessage {std::stringstream{}};
-        formattedErrorMessage   << "Failed to demangle symbol " 
-                                << mangledSymbolName
-                                << " error code: "
-                                <<  status;
+        auto formattedErrorMessage{std::stringstream{}};
+        formattedErrorMessage << "Failed to demangle symbol " << mangledSymbolName << " error code: " << status;
 
         throw std::runtime_error(formattedErrorMessage.str());
     };
@@ -92,7 +85,9 @@ auto getLoadedModuleInfo(std::string_view moduleName) -> LoadedModule
 
 auto openLoadedModuleHandle(std::string_view moduleName) -> ModuleHandle
 {
-    const std::string moduleFullName{std::string_view::npos == moduleName.find(SO_SHARED_LIB_FILE_EXTENSION) ? std::string{moduleName} + SO_SHARED_LIB_FILE_EXTENSION : moduleName};
+    const std::string moduleFullName{std::string_view::npos == moduleName.find(SO_SHARED_LIB_FILE_EXTENSION)
+                                         ? std::string{moduleName} + SO_SHARED_LIB_FILE_EXTENSION
+                                         : moduleName};
 
     return dlopen(moduleFullName.data(), RTLD_NOW | RTLD_NOLOAD);
 }
@@ -100,9 +95,9 @@ auto openLoadedModuleHandle(std::string_view moduleName) -> ModuleHandle
 auto getLoadedModuleSymbolsAddresses(const LoadedModule& loadedModuleInfo)
     -> std::unordered_map<std::string, std::uintptr_t>
 {
-    auto symbolsAndAddresses{std::unordered_map<std::string, std::uintptr_t>{}};
-    
-    auto scopedModule {ScopedModuleHandle{loadedModuleInfo.getName()}};
+    auto             symbolsAndAddresses{std::unordered_map<std::string, std::uintptr_t>{}};
+
+    auto             scopedModule{ScopedModuleHandle{loadedModuleInfo.getName()}};
 
     struct link_map* map = nullptr;
     if (dlinfo(scopedModule.get(), RTLD_DI_LINKMAP, &map) != 0 || !map) {
@@ -115,20 +110,20 @@ auto getLoadedModuleSymbolsAddresses(const LoadedModule& loadedModuleInfo)
     }
 
     const ElfW(Sym)* symbolsTable = nullptr;
-    const char* stringTable = nullptr;
-    size_t stringTableSize = 0;
+    const char* stringTable       = nullptr;
+    size_t      stringTableSize   = 0;
 
     for (ElfW(Dyn)* d = dynamic; d->d_tag != DT_NULL; ++d) {
         switch (d->d_tag) {
-            case DT_SYMTAB:
-                symbolsTable = reinterpret_cast<const ElfW(Sym)*>(d->d_un.d_ptr);
-                break;
-            case DT_STRTAB:
-                stringTable = reinterpret_cast<const char*>(d->d_un.d_ptr);
-                break;
-            case DT_STRSZ:
-                stringTableSize = d->d_un.d_val;
-                break;
+        case DT_SYMTAB:
+            symbolsTable = reinterpret_cast<const ElfW(Sym)*>(d->d_un.d_ptr);
+            break;
+        case DT_STRTAB:
+            stringTable = reinterpret_cast<const char*>(d->d_un.d_ptr);
+            break;
+        case DT_STRSZ:
+            stringTableSize = d->d_un.d_val;
+            break;
         }
     }
 
@@ -164,8 +159,10 @@ auto raiseSystemErrorException(const std::string& message) -> void
 
 auto makeLoadedModuleInfo(std::string_view moduleName) -> LoadedModule::ModuleInfo
 {
-    auto iteratorData {dl_phdr_iterator_callback_passed_data{}};
-    const std::string moduleFullName{std::string_view::npos == moduleName.find(SO_SHARED_LIB_FILE_EXTENSION) ? std::string{moduleName} + SO_SHARED_LIB_FILE_EXTENSION : moduleName};
+    auto              iteratorData{dl_phdr_iterator_callback_passed_data{}};
+    const std::string moduleFullName{std::string_view::npos == moduleName.find(SO_SHARED_LIB_FILE_EXTENSION)
+                                         ? std::string{moduleName} + SO_SHARED_LIB_FILE_EXTENSION
+                                         : moduleName};
 
     iteratorData.targetModule = moduleFullName;
 
