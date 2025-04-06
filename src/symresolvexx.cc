@@ -1,8 +1,8 @@
 #include <symresolvexx/symresolvexx.h>
 #include <utils/utils.h>
 
-namespace symresolvexx {
-auto resolveSymbol(std::string_view symbolName, std::string_view moduleName) -> void*
+namespace symresolvexx::resolveSymbol {
+auto byName(std::string_view symbolName, std::string_view moduleName) -> void*
 {
     const auto tryGetExported{utils::getExportedSymbolAddress(moduleName, symbolName)};
     if (0 != tryGetExported) {
@@ -17,8 +17,8 @@ auto resolveSymbol(std::string_view symbolName, std::string_view moduleName) -> 
     return nullptr;
 }
 
-auto resolveSymbolBySignaturePattern(
-    std::span<std::optional<std::byte>> symbolSignaturePattern, std::string_view moduleName) -> void*
+auto bySignaturePattern(std::span<std::optional<std::byte>> symbolSignaturePattern, std::string_view moduleName)
+    -> void*
 {
     const auto [moduleAddressBegin, moduleAddressEnd]{utils::getLoadedModuleBeginAndEndAddresses(moduleName)};
     const auto memoryView{std::span<std::byte>{
@@ -26,4 +26,4 @@ auto resolveSymbolBySignaturePattern(
 
     return reinterpret_cast<void*>(utils::findSignaturePatternInMemory(symbolSignaturePattern, memoryView));
 }
-} // namespace symresolvexx
+} // namespace symresolvexx::resolveSymbol
