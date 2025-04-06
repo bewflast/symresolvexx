@@ -17,8 +17,13 @@ auto resolveSymbol(std::string_view symbolName, std::string_view moduleName) -> 
     return nullptr;
 }
 
-auto resolveSymbolByPatternSignature(std::span<std::byte> symbolSignature, std::string_view moduleName) -> void*
+auto resolveSymbolBySignaturePattern(
+    std::span<std::optional<std::byte>> symbolSignaturePattern, std::string_view moduleName) -> void*
 {
-    return nullptr;
+    const auto [moduleAddressBegin, moduleAddressEnd]{utils::getLoadedModuleBeginAndEndAddresses(moduleName)};
+    const auto memoryView{std::span<std::byte>{
+        reinterpret_cast<std::byte*>(moduleAddressBegin), reinterpret_cast<std::byte*>(moduleAddressEnd)}};
+
+    return reinterpret_cast<void*>(utils::findSignaturePatternInMemory(symbolSignaturePattern, memoryView));
 }
 } // namespace symresolvexx

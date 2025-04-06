@@ -20,4 +20,5 @@ hicpp-ignored-remove-result,
 hicpp-exception-baseclass,
 -cppcoreguidelines-pro-type-reinterpret-cast,
 -performance-no-int-to-ptr,
--bugprone-easily-swappable-parameters'
+-bugprone-easily-swappable-parameters,
+-modernize-use-trailing-return-type'

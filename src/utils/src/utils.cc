@@ -42,4 +42,25 @@ auto getLoadedModuleBeginAndEndAddresses(std::string_view loadedModuleName) -> s
 
     return {loadedModuleInfo.getBeginAddress(), loadedModuleInfo.getEndAddress()};
 }
+
+auto findSignaturePatternInMemory(
+    std::span<std::optional<std::byte>> symbolSignaturePattern, std::span<std::byte> memoryView) -> std::uintptr_t
+{
+    for (const auto& moduleMemoryByte : memoryView) {
+        auto matched{true};
+
+        for (const auto& signaturePatternByte : symbolSignaturePattern) {
+            if (signaturePatternByte.has_value() and moduleMemoryByte != signaturePatternByte.value()) {
+                matched = false;
+                break;
+            }
+        }
+
+        if (matched) {
+            return reinterpret_cast<std::uintptr_t>(&moduleMemoryByte);
+        }
+    }
+
+    return 0;
+}
 } // namespace symresolvexx::utils
