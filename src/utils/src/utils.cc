@@ -1,9 +1,11 @@
 #include "utils/utils.h"
 
+#include <cstdint>
 #include <platform-defines/platform-defines.h>
 
 #include <memory>
 #include <string_view>
+#include <iterator>
 
 namespace {
 auto isSymbolExported(std::string_view moduleName) -> bool
@@ -46,18 +48,28 @@ auto getLoadedModuleBeginAndEndAddresses(std::string_view loadedModuleName) -> s
 auto findSignaturePatternInMemory(
     std::span<std::optional<std::byte>> symbolSignaturePattern, std::span<std::byte> memoryView) -> std::uintptr_t
 {
-    for (const auto& moduleMemoryByte : memoryView) {
-        auto matched{true};
+    if (symbolSignaturePattern.empty() || memoryView.size() < symbolSignaturePattern.size()) {
+        return 0;
+    }
 
-        for (const auto& signaturePatternByte : symbolSignaturePattern) {
-            if (signaturePatternByte.has_value() and moduleMemoryByte != signaturePatternByte.value()) {
+    const auto* scanStartAddr = memoryView.data();
+    const auto* scanEndAddr   = std::next(
+        scanStartAddr, static_cast<std::int64_t>(memoryView.size() - symbolSignaturePattern.size()));
+
+    for (const auto* currentMemoryPtr = scanStartAddr; currentMemoryPtr <= scanEndAddr;
+        currentMemoryPtr              = std::next(currentMemoryPtr)) {
+        bool matched = true;
+
+        for (auto i = size_t{0}; i < symbolSignaturePattern.size(); ++i) {
+            if (symbolSignaturePattern[i].has_value()
+                and *std::next(currentMemoryPtr, static_cast<std::int64_t>(i)) != symbolSignaturePattern[i].value()) {
                 matched = false;
                 break;
             }
         }
 
         if (matched) {
-            return reinterpret_cast<std::uintptr_t>(&moduleMemoryByte);
+            return reinterpret_cast<std::uintptr_t>(currentMemoryPtr);
         }
     }
 
