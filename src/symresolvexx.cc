@@ -17,7 +17,7 @@ auto byName(std::string_view symbolName, std::string_view moduleName) -> void*
     return nullptr;
 }
 
-auto bySignaturePattern(std::span<std::optional<std::byte>> symbolSignaturePattern, std::string_view moduleName)
+auto bySignaturePattern(std::span<const std::optional<std::byte>> symbolSignaturePattern, std::string_view moduleName)
     -> void*
 {
     const auto [moduleAddressBegin, moduleAddressEnd]{utils::getLoadedModuleBeginAndEndAddresses(moduleName)};

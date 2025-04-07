@@ -45,8 +45,8 @@ auto getLoadedModuleBeginAndEndAddresses(std::string_view loadedModuleName) -> s
     return {loadedModuleInfo.getBeginAddress(), loadedModuleInfo.getEndAddress()};
 }
 
-auto findSignaturePatternInMemory(
-    std::span<std::optional<std::byte>> symbolSignaturePattern, std::span<std::byte> memoryView) -> std::uintptr_t
+auto findSignaturePatternInMemory(std::span<const std::optional<std::byte>> symbolSignaturePattern,
+    std::span<const std::byte>                                              memoryView) -> std::uintptr_t
 {
     if (symbolSignaturePattern.empty() || memoryView.size() < symbolSignaturePattern.size()) {
         return 0;
