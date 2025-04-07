@@ -40,8 +40,8 @@ const auto* CBaseClientExecuteStringCommand{symresolvexx::resolveSymbol::byName(
 //the format is [sub::]name([const ]param[*])
 //anyway, mangled/decorated symbols' names are preferred to use
 
-const auto CThreadInitAddr{symresolvexx::resolveSymbol::byName("CThread::Init()", "server")};
-const auto CThreadInitAddr{symresolvexx::resolveSymbol::byName("CBaseClient::ExecuteStringCommand(char const*)", "server")};
+const auto* CThreadInitAddr{symresolvexx::resolveSymbol::byName("CThread::Init()", "server")};
+const auto* CThreadInitAddr{symresolvexx::resolveSymbol::byName("CBaseClient::ExecuteStringCommand(char const*)", "server")};
 ```
 
 *   Resolve by symbol's signature pattern
